@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
-typedef pcl::PointXYZ PointT
+typedef pcl::PointXYZ PointT;
 typedef pcl::PointCloud<PointT> PointCloud;
 
 class rsj_pointcloud_test_node
