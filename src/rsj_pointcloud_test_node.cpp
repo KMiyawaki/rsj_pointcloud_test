@@ -11,6 +11,7 @@ private:
 
   void cb_points(const PointCloud::ConstPtr &msg)
   {
+    ROS_INFO("width: %d, height: %d", msg->width, msg->height);
   }
 
 public:
