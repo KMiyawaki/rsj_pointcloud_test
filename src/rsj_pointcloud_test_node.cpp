@@ -1,5 +1,7 @@
 #include <ros/ros.h>
+#include <tf/transform_listener.h>
 #include <pcl_ros/point_cloud.h>
+#include <pcl_ros/transforms.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/voxel_grid.h>
@@ -14,11 +16,15 @@ class rsj_pointcloud_test_node
 {
 private:
   ros::Subscriber sub_points;
+  std::string target_frame;
+  tf::TransformListener tf_listener;
+  ros::Publisher pub_transform;
+  PointCloud::Ptr cloud_tranform;
   pcl::PassThrough<PointT> pass;
-  pcl::PointCloud<PointT>::Ptr cloud_passthrough;
+  PointCloud::Ptr cloud_passthrough;
   ros::Publisher pub_passthrough;
   pcl::VoxelGrid<PointT> voxel;
-  pcl::PointCloud<PointT>::Ptr cloud_voxel;
+  PointCloud::Ptr cloud_voxel;
   ros::Publisher pub_voxel;
   pcl::search::KdTree<PointT>::Ptr tree;
   pcl::EuclideanClusterExtraction<PointT> ec;
@@ -28,7 +34,18 @@ private:
   {
     try
     {
-      pass.setInputCloud(msg);
+      std::string frame_id = msg->header.frame_id;
+      if (target_frame.empty() == false)
+      {
+        frame_id = target_frame;
+        if (pcl_ros::transformPointCloud(target_frame, *msg, *cloud_tranform, tf_listener) == false)
+        {
+          ROS_ERROR("Failed pcl_ros::transformPointCloud. target_frame = %s", target_frame.c_str());
+          return;
+        }
+      }
+      pub_transform.publish(cloud_tranform);
+      pass.setInputCloud(cloud_tranform);
       pass.filter(*cloud_passthrough);
       pub_passthrough.publish(cloud_passthrough);
       voxel.setInputCloud(cloud_passthrough);
@@ -45,7 +62,7 @@ private:
       {
         Eigen::Vector4f min_pt, max_pt;
         pcl::getMinMax3D(*cloud_voxel, *it, min_pt, max_pt);
-        marker_array.markers.push_back(make_marker(msg->header.frame_id, marker_id, min_pt, max_pt));
+        marker_array.markers.push_back(make_marker(frame_id, marker_id, min_pt, max_pt));
       }
       if (marker_array.markers.empty() == false)
       {
@@ -95,10 +112,15 @@ public:
   rsj_pointcloud_test_node()
   {
     ros::NodeHandle nh("~");
+    target_frame = "";
+    nh.getParam("target_frame", target_frame);
+    ROS_INFO("target_frame='%s'", target_frame.c_str());
     sub_points = nh.subscribe("/camera/depth_registered/points", 5,
                               &rsj_pointcloud_test_node::cb_points, this);
-    pass.setFilterFieldName("y");
-    pass.setFilterLimits(-1.0, -0.5);
+    pub_transform = nh.advertise<PointCloud>("transform", 1);
+    cloud_tranform.reset(new PointCloud());
+    pass.setFilterFieldName("z");
+    pass.setFilterLimits(0.5, 1.0);
     cloud_passthrough.reset(new PointCloud());
     pub_passthrough = nh.advertise<PointCloud>("passthrough", 1);
     voxel.setLeafSize(0.025f, 0.025f, 0.025f);
