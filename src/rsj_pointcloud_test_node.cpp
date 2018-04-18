@@ -1,5 +1,7 @@
 #include <ros/ros.h>
+#include <tf/transform_listener.h>
 #include <pcl_ros/point_cloud.h>
+#include <pcl_ros/transforms.h>
 #include <pcl/point_types.h>
 #include <visualization_msgs/MarkerArray.h>
 typedef pcl::PointXYZ PointT;
@@ -9,11 +11,36 @@ class rsj_pointcloud_test_node
 {
 private:
   ros::Subscriber sub_points;
+  std::string target_frame;
+  tf::TransformListener tf_listener;
+  ros::Publisher pub_transform;
+  PointCloud::Ptr cloud_tranform;
 
   void cb_points(const PointCloud::ConstPtr &msg)
   {
+    try
+    {
+      std::string frame_id = msg->header.frame_id;
+      PointCloud::ConstPtr cloud_src = msg;
+      if (target_frame.empty() == false)
+      {
+        frame_id = target_frame;
+        if (pcl_ros::transformPointCloud(target_frame, *msg, *cloud_tranform, tf_listener) == false)
+        {
+          ROS_ERROR("Failed pcl_ros::transformPointCloud. target_frame = %s", target_frame.c_str());
+          return;
+        }
+        pub_transform.publish(cloud_tranform);
+        cloud_src = cloud_tranform;
+      }
+      // ここに cloud_src に対するフィルタ処理を書く
+    }
+    catch (std::exception &e)
+    {
+      ROS_ERROR("%s", e.what());
+    }
   }
-  
+
   visualization_msgs::Marker make_marker(const std::string &frame_id, int marker_id, const Eigen::Vector4f &min_pt, const Eigen::Vector4f &max_pt) const
   {
     visualization_msgs::Marker marker;
@@ -50,8 +77,15 @@ public:
   rsj_pointcloud_test_node()
   {
     ros::NodeHandle nh("~");
-    sub_points = nh.subscribe("/camera/depth_registered/points", 5,
-                              &rsj_pointcloud_test_node::cb_points, this);
+    target_frame = "";
+    std::string topic_name = "/camera/depth_registered/points";
+    nh.getParam("target_frame", target_frame);
+    nh.getParam("topic_name", topic_name);
+    ROS_INFO("target_frame='%s'", target_frame.c_str());
+    ROS_INFO("topic_name='%s'", topic_name.c_str());
+    sub_points = nh.subscribe(topic_name, 5, &rsj_pointcloud_test_node::cb_points, this);
+    pub_transform = nh.advertise<PointCloud>("transform", 1);
+    cloud_tranform.reset(new PointCloud());
   }
 
   void mainloop()
