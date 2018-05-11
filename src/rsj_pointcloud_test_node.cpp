@@ -40,13 +40,13 @@ private:
       ROS_ERROR("%s", e.what());
     }
   }
-
-  visualization_msgs::Marker make_marker(const std::string &frame_id, int marker_id, const Eigen::Vector4f &min_pt, const Eigen::Vector4f &max_pt) const
+  visualization_msgs::Marker make_marker(const std::string &frame_id, const std::string &marker_ns, int marker_id, const Eigen::Vector4f &min_pt, const Eigen::Vector4f &max_pt,
+                                         float r, float g, float b, float a) const
   {
     visualization_msgs::Marker marker;
     marker.header.frame_id = frame_id;
     marker.header.stamp = ros::Time::now();
-    marker.ns = "pcl_clusters";
+    marker.ns = marker_ns;
     marker.id = marker_id;
     marker.type = visualization_msgs::Marker::CUBE;
     marker.action = visualization_msgs::Marker::ADD;
@@ -64,10 +64,10 @@ private:
     marker.scale.y = max_pt.y() - min_pt.y();
     marker.scale.z = max_pt.z() - min_pt.z();
 
-    marker.color.r = 0.0f;
-    marker.color.g = 1.0f;
-    marker.color.b = 0.0f;
-    marker.color.a = 0.2f;
+    marker.color.r = r;
+    marker.color.g = g;
+    marker.color.b = b;
+    marker.color.a = a;
 
     marker.lifetime = ros::Duration(0.3);
     return marker;
