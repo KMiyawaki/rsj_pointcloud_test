@@ -60,17 +60,40 @@ private:
       ec.extract(cluster_indices);
       visualization_msgs::MarkerArray marker_array;
       int marker_id = 0;
+      size_t ok = 0;
       for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(), it_end = cluster_indices.end(); it != it_end; ++it, ++marker_id)
       {
         Eigen::Vector4f min_pt, max_pt;
         pcl::getMinMax3D(*cloud_voxel, *it, min_pt, max_pt);
-        marker_array.markers.push_back(make_marker(frame_id, marker_id, min_pt, max_pt));
+        Eigen::Vector4f cluster_size = max_pt - min_pt;
+        bool is_ok = true;
+        if (cluster_size.x() < 0.05 || cluster_size.x() > 0.4)
+        {
+          is_ok = false;
+        }
+        else if (cluster_size.y() < 0.05 || cluster_size.y() > 0.6)
+        {
+          is_ok = false;
+        }
+        else if (cluster_size.z() < 0.05 || cluster_size.z() > 0.5)
+        {
+          is_ok = false;
+        }
+        if (is_ok)
+        {
+          marker_array.markers.push_back(make_marker(frame_id, "ok_cluster", marker_id, min_pt, max_pt, 1.0f, 0.0f, 0.0f, 0.5f));
+          ok++;
+        }
+        else
+        {
+          marker_array.markers.push_back(make_marker(frame_id, "cluster", marker_id, min_pt, max_pt, 0.0f, 1.0f, 0.0f, 0.2f));
+        }
       }
       if (marker_array.markers.empty() == false)
       {
         pub_clusters.publish(marker_array);
       }
-      ROS_INFO("points (src: %zu, paththrough: %zu, voxelgrid: %zu, cluster: %zu)", msg->size(), cloud_passthrough->size(), cloud_voxel->size(), cluster_indices.size());
+      ROS_INFO("points (src: %zu, paththrough: %zu, voxelgrid: %zu, cluster: %zu, ok_cluster: %zu)", msg->size(), cloud_passthrough->size(), cloud_voxel->size(), cluster_indices.size(), ok);
     }
     catch (std::exception &e)
     {
@@ -78,12 +101,13 @@ private:
     }
   }
 
-  visualization_msgs::Marker make_marker(const std::string &frame_id, int marker_id, const Eigen::Vector4f &min_pt, const Eigen::Vector4f &max_pt) const
+  visualization_msgs::Marker make_marker(const std::string &frame_id, const std::string &marker_ns, int marker_id, const Eigen::Vector4f &min_pt, const Eigen::Vector4f &max_pt,
+                                         float r, float g, float b, float a) const
   {
     visualization_msgs::Marker marker;
     marker.header.frame_id = frame_id;
     marker.header.stamp = ros::Time::now();
-    marker.ns = "pcl_clusters";
+    marker.ns = marker_ns;
     marker.id = marker_id;
     marker.type = visualization_msgs::Marker::CUBE;
     marker.action = visualization_msgs::Marker::ADD;
@@ -101,10 +125,10 @@ private:
     marker.scale.y = max_pt.y() - min_pt.y();
     marker.scale.z = max_pt.z() - min_pt.z();
 
-    marker.color.r = 0.0f;
-    marker.color.g = 1.0f;
-    marker.color.b = 0.0f;
-    marker.color.a = 0.2f;
+    marker.color.r = r;
+    marker.color.g = g;
+    marker.color.b = b;
+    marker.color.a = a;
 
     marker.lifetime = ros::Duration(0.3);
     return marker;
@@ -124,7 +148,7 @@ public:
     pub_transform = nh.advertise<PointCloud>("transform", 1);
     cloud_tranform.reset(new PointCloud());
     pass.setFilterFieldName("z");   // Z軸（高さ）の値でフィルタをかける
-    pass.setFilterLimits(0.5, 1.0); // 0.5 〜 1.0 m の間にある点群を抽出
+    pass.setFilterLimits(0.1, 1.0); // 0.1 〜 1.0 m の間にある点群を抽出
     cloud_passthrough.reset(new PointCloud());
     pub_passthrough = nh.advertise<PointCloud>("passthrough", 1);
     voxel.setLeafSize(0.025f, 0.025f, 0.025f); // 0.025 m 間隔でダウンサンプリング
