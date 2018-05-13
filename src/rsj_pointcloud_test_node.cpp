@@ -59,6 +59,7 @@ private:
       ec.setInputCloud(cloud_voxel);
       ec.extract(cluster_indices);
       visualization_msgs::MarkerArray marker_array;
+      int target_index = -1;
       int marker_id = 0;
       size_t ok = 0;
       for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(), it_end = cluster_indices.end(); it != it_end; ++it, ++marker_id)
@@ -79,18 +80,36 @@ private:
         {
           is_ok = false;
         }
+        visualization_msgs::Marker marker = make_marker(frame_id, "cluster", marker_id, min_pt, max_pt, 0.0f, 1.0f, 0.0f, 0.2f);
         if (is_ok)
         {
-          marker_array.markers.push_back(make_marker(frame_id, "ok_cluster", marker_id, min_pt, max_pt, 1.0f, 0.0f, 0.0f, 0.5f));
+          marker.ns = "ok_cluster";
+          marker.color.r = 1.0f;
+          marker.color.g = 0.0f;
+          marker.color.b = 0.0f;
+          marker.color.a = 0.5f;
           ok++;
+          if(target_index < 0){
+            target_index = marker_array.markers.size();
+          }else{
+            float d1 = ::hypot(marker_array.markers[target_index].pose.position.x, marker_array.markers[target_index].pose.position.y);
+            float d2 = ::hypot(marker.pose.position.x, marker.pose.position.y);
+            if(d2 < d1){
+              target_index = marker_array.markers.size();
+            }
+          }
         }
-        else
-        {
-          marker_array.markers.push_back(make_marker(frame_id, "cluster", marker_id, min_pt, max_pt, 0.0f, 1.0f, 0.0f, 0.2f));
-        }
+        marker_array.markers.push_back(marker);
       }
       if (marker_array.markers.empty() == false)
       {
+        if(target_index >= 0){
+          marker_array.markers[target_index].ns = "target_cluster";
+          marker_array.markers[target_index].color.r = 1.0f;
+          marker_array.markers[target_index].color.g = 0.0f;
+          marker_array.markers[target_index].color.b = 1.0f;
+          marker_array.markers[target_index].color.a = 0.5f;
+        }
         pub_clusters.publish(marker_array);
       }
       ROS_INFO("points (src: %zu, paththrough: %zu, voxelgrid: %zu, cluster: %zu, ok_cluster: %zu)", msg->size(), cloud_passthrough->size(), cloud_voxel->size(), cluster_indices.size(), ok);
