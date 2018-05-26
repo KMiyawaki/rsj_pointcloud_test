@@ -67,43 +67,51 @@ private:
         Eigen::Vector4f min_pt, max_pt;
         pcl::getMinMax3D(*cloud_voxel, *it, min_pt, max_pt);
         Eigen::Vector4f cluster_size = max_pt - min_pt;
-        bool is_ok = true;
-        if (cluster_size.x() < 0.05 || cluster_size.x() > 0.4)
+        if (cluster_size.x() > 0 && cluster_size.y() > 0 && cluster_size.z() > 0)
         {
-          is_ok = false;
-        }
-        else if (cluster_size.y() < 0.05 || cluster_size.y() > 0.6)
-        {
-          is_ok = false;
-        }
-        else if (cluster_size.z() < 0.05 || cluster_size.z() > 0.5)
-        {
-          is_ok = false;
-        }
-        visualization_msgs::Marker marker = make_marker(frame_id, "cluster", marker_id, min_pt, max_pt, 0.0f, 1.0f, 0.0f, 0.2f);
-        if (is_ok)
-        {
-          marker.ns = "ok_cluster";
-          marker.color.r = 1.0f;
-          marker.color.g = 0.0f;
-          marker.color.b = 0.0f;
-          marker.color.a = 0.5f;
-          ok++;
-          if(target_index < 0){
-            target_index = marker_array.markers.size();
-          }else{
-            float d1 = ::hypot(marker_array.markers[target_index].pose.position.x, marker_array.markers[target_index].pose.position.y);
-            float d2 = ::hypot(marker.pose.position.x, marker.pose.position.y);
-            if(d2 < d1){
+          bool is_ok = true;
+          if (cluster_size.x() < 0.05 || cluster_size.x() > 0.4)
+          {
+            is_ok = false;
+          }
+          else if (cluster_size.y() < 0.05 || cluster_size.y() > 0.6)
+          {
+            is_ok = false;
+          }
+          else if (cluster_size.z() < 0.05 || cluster_size.z() > 0.5)
+          {
+            is_ok = false;
+          }
+          visualization_msgs::Marker marker = make_marker(frame_id, "cluster", marker_id, min_pt, max_pt, 0.0f, 1.0f, 0.0f, 0.2f);
+          if (is_ok)
+          {
+            marker.ns = "ok_cluster";
+            marker.color.r = 1.0f;
+            marker.color.g = 0.0f;
+            marker.color.b = 0.0f;
+            marker.color.a = 0.5f;
+            ok++;
+            if (target_index < 0)
+            {
               target_index = marker_array.markers.size();
             }
+            else
+            {
+              float d1 = ::hypot(marker_array.markers[target_index].pose.position.x, marker_array.markers[target_index].pose.position.y);
+              float d2 = ::hypot(marker.pose.position.x, marker.pose.position.y);
+              if (d2 < d1)
+              {
+                target_index = marker_array.markers.size();
+              }
+            }
           }
+          marker_array.markers.push_back(marker);
         }
-        marker_array.markers.push_back(marker);
       }
       if (marker_array.markers.empty() == false)
       {
-        if(target_index >= 0){
+        if (target_index >= 0)
+        {
           marker_array.markers[target_index].ns = "target_cluster";
           marker_array.markers[target_index].color.r = 1.0f;
           marker_array.markers[target_index].color.g = 0.0f;
