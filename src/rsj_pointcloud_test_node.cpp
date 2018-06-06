@@ -4,34 +4,35 @@
 #include <pcl_ros/transforms.h>
 #include <pcl/point_types.h>
 #include <visualization_msgs/MarkerArray.h>
+
 typedef pcl::PointXYZ PointT;
 typedef pcl::PointCloud<PointT> PointCloud;
 
-class rsj_pointcloud_test_node
+class RsjPointcloudTestNode
 {
 private:
-  ros::Subscriber sub_points;
-  std::string target_frame;
-  tf::TransformListener tf_listener;
-  ros::Publisher pub_transform;
-  PointCloud::Ptr cloud_tranform;
+  ros::Subscriber sub_points_;
+  std::string target_frame_;
+  tf::TransformListener tf_listener_;
+  ros::Publisher pub_transform_;
+  PointCloud::Ptr cloud_tranform_;
 
-  void cb_points(const PointCloud::ConstPtr &msg)
+  void cbPoints(const PointCloud::ConstPtr &msg)
   {
     try
     {
       std::string frame_id = msg->header.frame_id;
       PointCloud::ConstPtr cloud_src = msg;
-      if (target_frame.empty() == false)
+      if (target_frame_.empty() == false)
       {
-        frame_id = target_frame;
-        if (pcl_ros::transformPointCloud(target_frame, *msg, *cloud_tranform, tf_listener) == false)
+        frame_id = target_frame_;
+        if (pcl_ros::transformPointCloud(target_frame_, *msg, *cloud_tranform_, tf_listener_) == false)
         {
-          ROS_ERROR("Failed pcl_ros::transformPointCloud. target_frame = %s", target_frame.c_str());
+          ROS_ERROR("Failed pcl_ros::transformPointCloud. target_frame_ = %s", target_frame_.c_str());
           return;
         }
-        pub_transform.publish(cloud_tranform);
-        cloud_src = cloud_tranform;
+        pub_transform_.publish(cloud_tranform_);
+        cloud_src = cloud_tranform_;
       }
       // ここに cloud_src に対するフィルタ処理を書く
     }
@@ -40,8 +41,8 @@ private:
       ROS_ERROR("%s", e.what());
     }
   }
-  visualization_msgs::Marker make_marker(const std::string &frame_id, const std::string &marker_ns, int marker_id, const Eigen::Vector4f &min_pt, const Eigen::Vector4f &max_pt,
-                                         float r, float g, float b, float a) const
+  visualization_msgs::Marker makeMarker(const std::string &frame_id, const std::string &marker_ns, int marker_id, const Eigen::Vector4f &min_pt, const Eigen::Vector4f &max_pt,
+                                        float r, float g, float b, float a) const
   {
     visualization_msgs::Marker marker;
     marker.header.frame_id = frame_id;
@@ -74,18 +75,18 @@ private:
   }
 
 public:
-  rsj_pointcloud_test_node()
+  RsjPointcloudTestNode()
   {
     ros::NodeHandle nh("~");
-    target_frame = "";
+    target_frame_ = "";
     std::string topic_name = "/camera/depth_registered/points";
-    nh.getParam("target_frame", target_frame);
+    nh.getParam("target_frame", target_frame_);
     nh.getParam("topic_name", topic_name);
-    ROS_INFO("target_frame='%s'", target_frame.c_str());
+    ROS_INFO("target_frame='%s'", target_frame_.c_str());
     ROS_INFO("topic_name='%s'", topic_name.c_str());
-    sub_points = nh.subscribe(topic_name, 5, &rsj_pointcloud_test_node::cb_points, this);
-    pub_transform = nh.advertise<PointCloud>("transform", 1);
-    cloud_tranform.reset(new PointCloud());
+    sub_points_ = nh.subscribe(topic_name, 5, &RsjPointcloudTestNode::cbPoints, this);
+    pub_transform_ = nh.advertise<PointCloud>("transform", 1);
+    cloud_tranform_.reset(new PointCloud());
   }
 
   void mainloop()
@@ -104,6 +105,6 @@ public:
 int main(int argc, char *argv[])
 {
   ros::init(argc, argv, "rsj_pointcloud_test_node");
-  rsj_pointcloud_test_node pointcloud_test;
+  RsjPointcloudTestNode pointcloud_test;
   pointcloud_test.mainloop();
 }
