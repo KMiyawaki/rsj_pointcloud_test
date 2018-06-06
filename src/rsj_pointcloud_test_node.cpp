@@ -11,6 +11,9 @@ typedef pcl::PointCloud<PointT> PointCloud;
 class RsjPointcloudTestNode
 {
 private:
+  ros::NodeHandle nh_;
+  ros::NodeHandle pnh_;
+
   ros::Subscriber sub_points_;
   std::string target_frame_;
   tf::TransformListener tf_listener_;
@@ -76,16 +79,16 @@ private:
 
 public:
   RsjPointcloudTestNode()
+    : nh_()
+    , pnh_("~")
   {
-    ros::NodeHandle nh("~");
-    target_frame_ = "";
-    std::string topic_name = "/camera/depth_registered/points";
-    nh.getParam("target_frame", target_frame_);
-    nh.getParam("topic_name", topic_name);
+    std::string topic_name;
+    pnh_.param("target_frame", target_frame_, std::string(""));
+    pnh_.param("topic_name", topic_name, std::string("/camera/depth_registered/points"));
     ROS_INFO("target_frame='%s'", target_frame_.c_str());
     ROS_INFO("topic_name='%s'", topic_name.c_str());
-    sub_points_ = nh.subscribe(topic_name, 5, &RsjPointcloudTestNode::cbPoints, this);
-    pub_transform_ = nh.advertise<PointCloud>("transform", 1);
+    sub_points_ = nh_.subscribe(topic_name, 5, &RsjPointcloudTestNode::cbPoints, this);
+    pub_transform_ = pnh_.advertise<PointCloud>("transform", 1);
     cloud_tranform_.reset(new PointCloud());
   }
 
