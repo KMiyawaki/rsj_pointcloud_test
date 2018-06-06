@@ -91,23 +91,13 @@ public:
     pub_transform_ = pnh_.advertise<PointCloud>("transform", 1);
     cloud_tranform_.reset(new PointCloud());
   }
-
-  void mainloop()
-  {
-    ROS_INFO("Hello Point Cloud!");
-
-    ros::Rate rate(30.0);
-    while (ros::ok())
-    {
-      ros::spinOnce();
-      rate.sleep();
-    }
-  }
 };
 
 int main(int argc, char *argv[])
 {
   ros::init(argc, argv, "rsj_pointcloud_test_node");
+
   RsjPointcloudTestNode pointcloud_test;
-  pointcloud_test.mainloop();
+  ROS_INFO("Hello Point Cloud!");
+  ros::spin();
 }
