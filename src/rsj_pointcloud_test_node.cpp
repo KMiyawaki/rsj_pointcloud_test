@@ -29,9 +29,11 @@ private:
       if (target_frame_.empty() == false)
       {
         frame_id = target_frame_;
-        if (pcl_ros::transformPointCloud(target_frame_, *msg, *cloud_tranformed_, tf_listener_) == false)
+        if (pcl_ros::transformPointCloud(
+                target_frame_, *msg, *cloud_tranformed_, tf_listener_) == false)
         {
-          ROS_ERROR("Failed pcl_ros::transformPointCloud. target_frame = %s", target_frame_.c_str());
+          ROS_ERROR("Failed pcl_ros::transformPointCloud. target_frame = %s",
+                    target_frame_.c_str());
           return;
         }
         pub_transformed_.publish(cloud_tranformed_);
@@ -44,8 +46,11 @@ private:
       ROS_ERROR("%s", e.what());
     }
   }
-  visualization_msgs::Marker makeMarker(const std::string &frame_id, const std::string &marker_ns, int marker_id, const Eigen::Vector4f &min_pt, const Eigen::Vector4f &max_pt,
-                                        float r, float g, float b, float a) const
+  visualization_msgs::Marker makeMarker(
+      const std::string &frame_id, const std::string &marker_ns,
+      int marker_id,
+      const Eigen::Vector4f &min_pt, const Eigen::Vector4f &max_pt,
+      float r, float g, float b, float a) const
   {
     visualization_msgs::Marker marker;
     marker.header.frame_id = frame_id;
