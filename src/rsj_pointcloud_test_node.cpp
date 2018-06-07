@@ -31,7 +31,7 @@ private:
         frame_id = target_frame_;
         if (pcl_ros::transformPointCloud(target_frame_, *msg, *cloud_tranformed_, tf_listener_) == false)
         {
-          ROS_ERROR("Failed pcl_ros::transformPointCloud. target_frame_ = %s", target_frame_.c_str());
+          ROS_ERROR("Failed pcl_ros::transformPointCloud. target_frame = %s", target_frame_.c_str());
           return;
         }
         pub_transformed_.publish(cloud_tranformed_);
@@ -85,8 +85,8 @@ public:
     std::string topic_name;
     pnh_.param("target_frame", target_frame_, std::string(""));
     pnh_.param("topic_name", topic_name, std::string("/camera/depth_registered/points"));
-    ROS_INFO("target_frame='%s'", target_frame_.c_str());
-    ROS_INFO("topic_name='%s'", topic_name.c_str());
+    ROS_INFO("target_frame = '%s'", target_frame_.c_str());
+    ROS_INFO("topic_name = '%s'", topic_name.c_str());
     sub_points_ = nh_.subscribe(topic_name, 5, &RsjPointcloudTestNode::cbPoints, this);
     pub_transformed_ = nh_.advertise<PointCloud>("cloud_transformed", 1);
     cloud_tranformed_.reset(new PointCloud());
