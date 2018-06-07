@@ -17,8 +17,8 @@ private:
   ros::Subscriber sub_points_;
   std::string target_frame_;
   tf::TransformListener tf_listener_;
-  ros::Publisher pub_transform_;
-  PointCloud::Ptr cloud_tranform_;
+  ros::Publisher pub_transformed_;
+  PointCloud::Ptr cloud_tranformed_;
 
   void cbPoints(const PointCloud::ConstPtr &msg)
   {
@@ -29,13 +29,13 @@ private:
       if (target_frame_.empty() == false)
       {
         frame_id = target_frame_;
-        if (pcl_ros::transformPointCloud(target_frame_, *msg, *cloud_tranform_, tf_listener_) == false)
+        if (pcl_ros::transformPointCloud(target_frame_, *msg, *cloud_tranformed_, tf_listener_) == false)
         {
           ROS_ERROR("Failed pcl_ros::transformPointCloud. target_frame_ = %s", target_frame_.c_str());
           return;
         }
-        pub_transform_.publish(cloud_tranform_);
-        cloud_src = cloud_tranform_;
+        pub_transformed_.publish(cloud_tranformed_);
+        cloud_src = cloud_tranformed_;
       }
       // ここに cloud_src に対するフィルタ処理を書く
     }
@@ -88,8 +88,8 @@ public:
     ROS_INFO("target_frame='%s'", target_frame_.c_str());
     ROS_INFO("topic_name='%s'", topic_name.c_str());
     sub_points_ = nh_.subscribe(topic_name, 5, &RsjPointcloudTestNode::cbPoints, this);
-    pub_transform_ = nh_.advertise<PointCloud>("transform", 1);
-    cloud_tranform_.reset(new PointCloud());
+    pub_transformed_ = nh_.advertise<PointCloud>("transform", 1);
+    cloud_tranformed_.reset(new PointCloud());
   }
 };
 
