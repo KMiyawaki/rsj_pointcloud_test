@@ -88,7 +88,7 @@ public:
     ROS_INFO("target_frame='%s'", target_frame_.c_str());
     ROS_INFO("topic_name='%s'", topic_name.c_str());
     sub_points_ = nh_.subscribe(topic_name, 5, &RsjPointcloudTestNode::cbPoints, this);
-    pub_transform_ = pnh_.advertise<PointCloud>("transform", 1);
+    pub_transform_ = nh_.advertise<PointCloud>("transform", 1);
     cloud_tranform_.reset(new PointCloud());
   }
 };
