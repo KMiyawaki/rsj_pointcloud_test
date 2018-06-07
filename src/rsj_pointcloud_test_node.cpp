@@ -9,10 +9,11 @@
 #include <pcl/kdtree/kdtree.h>  // 追記
 #include <pcl/segmentation/extract_clusters.h>  // 追記
 #include <visualization_msgs/MarkerArray.h>
+
 typedef pcl::PointXYZ PointT;
 typedef pcl::PointCloud<PointT> PointCloud;
 
-class rsj_pointcloud_test_node
+class RsjPointcloudTestNode
 {
 private:
   ros::NodeHandle nh_;
@@ -36,22 +37,24 @@ private:
   pcl::EuclideanClusterExtraction<PointT> ec_;
   ros::Publisher pub_clusters_;
 
-  void cb_points(const PointCloud::ConstPtr &msg)
+  void cbPoints(const PointCloud::ConstPtr &msg)
   {
     try
     {
       std::string frame_id = msg->header.frame_id;
       PointCloud::ConstPtr cloud_src = msg;
-      if (target_frame.empty() == false)
+      if (target_frame_.empty() == false)
       {
-        frame_id = target_frame;
-        if (pcl_ros::transformPointCloud(target_frame, *msg, *cloud_tranform, tf_listener) == false)
+        frame_id = target_frame_;
+        if (pcl_ros::transformPointCloud(
+                target_frame_, *msg, *cloud_tranformed_, tf_listener_) == false)
         {
-          ROS_ERROR("Failed pcl_ros::transformPointCloud. target_frame = %s", target_frame.c_str());
+          ROS_ERROR("Failed pcl_ros::transformPointCloud. target_frame = %s",
+                    target_frame_.c_str());
           return;
         }
-        pub_transform.publish(cloud_tranform);
-        cloud_src = cloud_tranform;
+        pub_transformed_.publish(cloud_tranformed_);
+        cloud_src = cloud_tranformed_;
       }
       // ここに cloud_src に対するフィルタ処理を書く
       pass_.setInputCloud(cloud_src);
@@ -144,9 +147,11 @@ private:
       ROS_ERROR("%s", e.what());
     }
   }
-
-  visualization_msgs::Marker make_marker(const std::string &frame_id, const std::string &marker_ns, int marker_id, const Eigen::Vector4f &min_pt, const Eigen::Vector4f &max_pt,
-                                         float r, float g, float b, float a) const
+  visualization_msgs::Marker makeMarker(
+      const std::string &frame_id, const std::string &marker_ns,
+      int marker_id,
+      const Eigen::Vector4f &min_pt, const Eigen::Vector4f &max_pt,
+      float r, float g, float b, float a) const
   {
     visualization_msgs::Marker marker;
     marker.header.frame_id = frame_id;
@@ -179,7 +184,9 @@ private:
   }
 
 public:
-  rsj_pointcloud_test_node()
+  RsjPointcloudTestNode()
+    : nh_()
+    , pnh_("~")
   {
     std::string topic_name;
     pnh_.param("target_frame", target_frame_, std::string(""));
@@ -211,6 +218,8 @@ public:
 int main(int argc, char *argv[])
 {
   ros::init(argc, argv, "rsj_pointcloud_test_node");
-  rsj_pointcloud_test_node pointcloud_test;
-  pointcloud_test.mainloop();
+
+  RsjPointcloudTestNode pointcloud_test;
+  ROS_INFO("Hello Point Cloud!");
+  ros::spin();
 }
