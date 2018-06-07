@@ -111,7 +111,7 @@ Visualization Manager:
       Size (Pixels): 2
       Size (m): 0.0500000007
       Style: Squares
-      Topic: /rsj_pointcloud_test_node/passthrough
+      Topic: /passthrough
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -141,14 +141,14 @@ Visualization Manager:
       Size (Pixels): 1
       Size (m): 0.0500000007
       Style: Boxes
-      Topic: /rsj_pointcloud_test_node/voxel
+      Topic: /voxel
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /rsj_pointcloud_test_node/clusters
+      Marker Topic: /clusters
       Name: MarkerArray
       Namespaces:
         {}
